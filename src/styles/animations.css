@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Spring physics animations */
+@keyframes spring-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Volumetric shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glass pulse */
+@keyframes glass-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+/* Glow breathe */
+@keyframes glow-breathe {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(110, 174, 220, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(110, 174, 220, 0.6);
+  }
+}
+
+/* Morphing shape */
+@keyframes morph {
+  0%, 100% {
+    border-radius: 40% 60% 70% 30% / 60% 30% 70% 40%;
+  }
+  33% {
+    border-radius: 60% 40% 30% 70% / 40% 70% 30% 60%;
+  }
+  66% {
+    border-radius: 70% 30% 60% 40% / 30% 60% 40% 70%;
+  }
+}
+
+/* Elastic loading */
+@keyframes elastic-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  80% {
+    transform: scaleX(1.05);
+  }
+  90% {
+    transform: scaleX(0.98);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  /* Instant states instead of animations */
+  [data-motion="spring"],
+  [data-motion="tilt"],
+  [data-motion="parallax"] {
+    transform: none !important;
+  }
+}
+
+/* GPU acceleration hints */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Smooth scroll behavior */
+@supports (scroll-behavior: smooth) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom easing functions */
+:root {
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out-quint: cubic-bezier(0.86, 0, 0.07, 1);
+  --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Utility classes */
+.animate-spring-bounce {
+  animation: spring-bounce 2s var(--ease-spring) infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-glass-pulse {
+  animation: glass-pulse 4s ease-in-out infinite;
+}
+
+.animate-glow-breathe {
+  animation: glow-breathe 3s ease-in-out infinite;
+}
+
+.animate-morph {
+  animation: morph 20s ease-in-out infinite;
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
