@@ -1,4 +1,3 @@
-// server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -73,10 +72,11 @@ app.post("/api/contact", async (req, res) => {
 });
 
 // SPA fallback route for React Router
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
+// Escape HTML to prevent XSS
 function escapeHtml(unsafe = "") {
   return String(unsafe)
     .replace(/&/g, "&amp;")
