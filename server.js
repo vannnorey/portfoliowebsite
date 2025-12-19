@@ -1,3 +1,4 @@
+// server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -31,13 +32,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify(function (error, success) {
+transporter.verify((error, success) => {
   if (error) console.error("[transporter.verify] error:", error);
   else console.log("[transporter.verify] SMTP ready");
 });
 
 // Serve frontend (Vite build)
-app.use(express.static(path.join(__dirname, "build"))); 
+app.use(express.static(path.join(__dirname, "build"))); // make sure folder is build
 
 // Contact POST endpoint
 app.post("/api/contact", async (req, res) => {
@@ -71,8 +72,8 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// Fallback route for SPA routing
-app.get("/:anyPath(*)", (req, res) => {
+// SPA fallback route for React Router
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
