@@ -1,4 +1,3 @@
-// updated server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -17,7 +16,6 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
   message: { ok: false, error: "Too many requests, try again later." },
 });
-app.use("/api/contact", contactLimiter);
 
 // Middleware
 app.use(cors()); // allow all origins on Render
@@ -37,11 +35,11 @@ transporter.verify((error, success) => {
   else console.log("[transporter.verify] SMTP ready");
 });
 
-// Serve frontend (Vite build)
-app.use(express.static(path.join(__dirname, "build"))); // make sure folder is build
+// Serve frontend (Vite build) - MUST come before API routes
+app.use(express.static(path.join(__dirname, "dist"))); // Changed from "build" to "dist" for Vite
 
 // Contact POST endpoint
-app.post("/api/contact", async (req, res) => {
+app.post("/api/contact", contactLimiter, async (req, res) => {
   try {
     const { name, email, message } = req.body;
     if (!name || !email || !message)
@@ -72,9 +70,9 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// SPA fallback route for React Router
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+// IMPORTANT: SPA fallback route - FIXED SYNTAX
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html")); // Changed from "build" to "dist"
 });
 
 // Escape HTML to prevent XSS
