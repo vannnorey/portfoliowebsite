@@ -18,7 +18,7 @@ const contactLimiter = rateLimit({
 });
 
 // Middleware
-app.use(cors()); // allow all origins on Render
+app.use(cors());
 app.use(express.json());
 
 // Nodemailer setup
@@ -36,7 +36,8 @@ transporter.verify((error, success) => {
 });
 
 // Serve frontend (Vite build) - MUST come before API routes
-app.use(express.static(path.join(__dirname, "dist"))); // Changed from "build" to "dist" for Vite
+// IMPORTANT: Your logs show Vite creates "build" folder, not "dist"
+app.use(express.static(path.join(__dirname, "build")));
 
 // Contact POST endpoint
 app.post("/api/contact", contactLimiter, async (req, res) => {
@@ -70,9 +71,9 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
   }
 });
 
-// IMPORTANT: SPA fallback route - FIXED SYNTAX
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html")); // Changed from "build" to "dist"
+// IMPORTANT: FIXED SPA fallback route - Use regex pattern to avoid path-to-regexp error
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 // Escape HTML to prevent XSS
