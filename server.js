@@ -1,33 +1,28 @@
-// server.js
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const path = require("path");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// near top of server.js (after require statements)
-const rateLimit = require("express-rate-limit");
-
-// limit to 6 requests per minute per IP (adjust as you like)
+// Rate limiter for contact form
 const contactLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 2,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { ok: false, error: "Too many requests, try again later." }, 
+  message: { ok: false, error: "Too many requests, try again later." },
 });
-
-// apply to contact endpoint only
 app.use("/api/contact", contactLimiter);
 
-
-app.use(cors({ origin: "http://localhost:3000" }));
+// Middleware
+app.use(cors()); // allow all origins on Render
 app.use(express.json());
 
-// Create nodemailer transporter using Gmail + App Password (uses env vars)
+// Nodemailer setup
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -36,30 +31,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// verify transporter AFTER creation so we get an immediate auth check
-transporter.verify(function(error, success) {
-  if (error) {
-    console.error("[transporter.verify] error:", error);
-  } else {
-    console.log("[transporter.verify] SMTP ready");
-  }
+transporter.verify(function (error, success) {
+  if (error) console.error("[transporter.verify] error:", error);
+  else console.log("[transporter.verify] SMTP ready");
 });
 
-// Health check
-app.get("/", (req, res) => {
-  res.json({ ok: true, msg: "Mail server running" });
-});
+// Serve frontend (Vite build)
+app.use(express.static(path.join(__dirname, "dist"))); // Vite build folder
 
 // Contact POST endpoint
 app.post("/api/contact", async (req, res) => {
   try {
-    const body = req.body || {};
-    console.log("[server] POST /api/contact body:", body);
-
-    const { name, email, message } = body;
-    if (!name || !email || !message) {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message)
       return res.status(400).json({ ok: false, error: "Missing required fields" });
-    }
 
     const html = `
       <h3>New contact form message</h3>
@@ -86,6 +71,11 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
+// Fallback route for SPA routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
 function escapeHtml(unsafe = "") {
   return String(unsafe)
     .replace(/&/g, "&amp;")
@@ -95,6 +85,7 @@ function escapeHtml(unsafe = "") {
     .replace(/'/g, "&#039;");
 }
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Mail server listening on http://localhost:${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
