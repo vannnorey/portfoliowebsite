@@ -18,7 +18,10 @@ const contactLimiter = rateLimit({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://portfoliowebsite-xaix.onrender.com',
+  credentials: true
+}));
 app.use(express.json());
 
 // Nodemailer setup
