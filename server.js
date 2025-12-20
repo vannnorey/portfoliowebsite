@@ -250,11 +250,32 @@ app.post("/api/contact", async (req, res) => {
   console.log("📨 ============ CONTACT FORM END ============");
 });
 
-// SPA fallback - WORKING ROUTE
-app.get('*', (req, res) => {
-  console.log(`🌐 SPA Route: ${req.path}`);
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// ================== FIX: WORKING SPA ROUTE ==================
+// REPLACE LINE 254 WITH THIS (Choose ONE option):
+
+// OPTION 1: Simple route handler (Recommended)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
+
+// OPTION 2: Multiple explicit routes (if you have React Router)
+app.get(["/", "/about", "/contact", "/projects", "/skills"], (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
+// OPTION 3: Regex pattern (Advanced)
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
+// OPTION 4: Manual catch-all (Simple fix)
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+// ============================================================
 
 // Start server
 app.listen(PORT, () => {
