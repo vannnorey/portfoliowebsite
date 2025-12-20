@@ -11,13 +11,13 @@ const PORT = process.env.PORT || 3001;
 const rateLimit = require("express-rate-limit");
 const contactLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // Increased for production
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: false, error: "Too many requests, try again later." },
 });
 
-// CORS for production (your Render URL) + localhost for development
+// CORS for production + development
 app.use(cors({
   origin: ['https://portfoliowebsite-xaix.onrender.com', 'http://localhost:3000'],
   credentials: true
@@ -35,35 +35,33 @@ const transporter = nodemailer.createTransport({
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
-  debug: true, // Enable for debugging
+  debug: true,
   logger: true
 });
 
-// Verify transporter on startup
+// Verify transporter
 transporter.verify((error, success) => {
   if (error) {
     console.error("❌ SMTP Connection Failed:", error.message);
-    console.error("Error details:", error);
   } else {
-    console.log("✅ SMTP Ready to send emails");
-    console.log("📧 Using Gmail account:", process.env.GMAIL_USER);
+    console.log("✅ SMTP Ready");
+    console.log("📧 Using:", process.env.GMAIL_USER);
   }
 });
 
-// Health check endpoint
+// Health check
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     service: "Portfolio API",
     status: "running",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development"
+    timestamp: new Date().toISOString()
   });
 });
 
-// Contact POST endpoint with rate limiting
+// Contact POST endpoint
 app.post("/api/contact", contactLimiter, async (req, res) => {
-  console.log("📨 Contact form submitted at:", new Date().toISOString());
+  console.log("📨 Contact form submitted");
   
   try {
     const { name, email, message } = req.body;
@@ -72,19 +70,18 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
     if (!name || !email || !message) {
       return res.status(400).json({
         ok: false,
-        error: "Please fill in all fields: name, email, and message"
+        error: "Please fill in all fields"
       });
     }
 
-    // Simple email validation
+    // Email validation
     if (!email.includes("@") || !email.includes(".")) {
       return res.status(400).json({
         ok: false,
-        error: "Please enter a valid email address"
+        error: "Please enter a valid email"
       });
     }
 
-    // Create email
     const html = `
       <h3>New contact form message</h3>
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
@@ -95,17 +92,17 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
 
     const mailOptions = {
       from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER, // Sends to yourself
+      to: process.env.GMAIL_USER,
       replyTo: email,
       subject: `Portfolio Contact: ${name} (${email})`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html,
     };
 
-    console.log("📤 Attempting to send email...");
+    console.log("📤 Sending email...");
     const info = await transporter.sendMail(mailOptions);
     
-    console.log("✅ Email sent successfully! Message ID:", info.messageId);
+    console.log("✅ Email sent! ID:", info.messageId);
     
     return res.json({
       ok: true,
@@ -114,32 +111,36 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
     });
     
   } catch (err) {
-    console.error("❌ Email sending error:", err.message);
-    console.error("Error code:", err.code);
+    console.error("❌ Email error:", err.message);
     
-    // User-friendly error messages
     let errorMessage = "Failed to send email. Please try again.";
     
     if (err.code === "EAUTH") {
       errorMessage = "Email service configuration error.";
-    } else if (err.code === "EENVELOPE") {
-      errorMessage = "Invalid email address format.";
     }
     
     return res.status(500).json({
       ok: false,
-      error: errorMessage,
-      details: process.env.NODE_ENV === "development" ? err.message : undefined
+      error: errorMessage
     });
   }
 });
 
-// SPA fallback - serve React app for all other routes
-app.get("*", (req, res) => {
+// === FIXED SPA FALLBACK - NO WILDCARD ERROR ===
+// Handle all other routes - serve React app
+app.get("/*", (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Utility function
+// Alternative simpler fix (use this instead of above):
+// app.get(/.*/, (req, res) => {
+//   res.sendFile(path.join(__dirname, "build", "index.html"));
+// });
+
 function escapeHtml(unsafe = "") {
   return String(unsafe)
     .replace(/&/g, "&amp;")
@@ -152,7 +153,7 @@ function escapeHtml(unsafe = "") {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Production URL: https://portfoliowebsite-xaix.onrender.com`);
-  console.log(`🔗 Health check: /api/health`);
-  console.log(`📧 Contact endpoint: POST /api/contact`);
+  console.log(`🌐 Production: https://portfoliowebsite-xaix.onrender.com`);
+  console.log(`🔗 Health: /api/health`);
+  console.log(`📧 Contact: POST /api/contact`);
 });
