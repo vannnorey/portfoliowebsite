@@ -43,6 +43,52 @@ transporter.verify((error, success) => {
   }
 });
 
+// Debug endpoint to check Gmail connection
+app.post("/api/debug", async (req, res) => {
+  console.log("🔧 Debug endpoint called");
+  
+  // Check credentials
+  console.log("Credentials check:");
+  console.log("- GMAIL_USER:", process.env.GMAIL_USER || "NOT SET");
+  console.log("- Password length:", process.env.GMAIL_APP_PASSWORD?.length || 0);
+  
+  try {
+    // Test SMTP connection
+    console.log("Testing SMTP connection...");
+    await transporter.verify();
+    console.log("✅ SMTP connection successful!");
+    
+    // Try to send a simple email
+    console.log("Attempting to send email...");
+    const info = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.GMAIL_USER,
+      subject: "DEBUG TEST",
+      text: "Test at " + new Date().toISOString()
+    });
+    
+    console.log("✅ Email sent! Message ID:", info.messageId);
+    res.json({ 
+      success: true, 
+      message: "Email sent successfully!",
+      messageId: info.messageId 
+    });
+    
+  } catch (error) {
+    console.error("❌ Debug error:");
+    console.error("- Code:", error.code);
+    console.error("- Message:", error.message);
+    console.error("- Command:", error.command);
+    
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code,
+      solution: "Check Gmail App Password and 2-Step Verification"
+    });
+  }
+});
+
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ 
