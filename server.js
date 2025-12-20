@@ -44,7 +44,7 @@ app.post("/api/test", async (req, res) => {
   try {
     const { data, error } = await resend.emails.send({
       from: 'Portfolio <onboarding@resend.dev>',
-      to: ['vannnorey088@gmail.com'],
+      to: ['cheahun2016@gmail.com'],
       subject: '✅ Your Portfolio Contact Form WORKS!',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
