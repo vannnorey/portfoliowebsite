@@ -7,11 +7,10 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Debug: Check environment with NEW variable names
+// Debug
 console.log("=== SERVER STARTING ===");
 console.log("PORT:", PORT);
 console.log("EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
-console.log("EMAIL_PASS exists?:", !!process.env.EMAIL_PASS);
 console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length || 0);
 
 // CORS
@@ -20,205 +19,229 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// Serve static files
 app.use(express.static(path.join(__dirname, "build")));
 
-// Email transporter with NEW variable names
+// ========== FIXED GMAIL TRANSPORTER ==========
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
+  port: 465,  // CHANGED: Use port 465 instead of 587
+  secure: true,  // CHANGED: true for port 465
   auth: {
-    user: process.env.EMAIL_USER,      // Changed from GMAIL_USER
-    pass: process.env.EMAIL_PASS,      // Changed from GMAIL_APP_PASSWORD
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
-  connectionTimeout: 10000,  // 10 seconds
-  socketTimeout: 10000,      // 10 seconds
-  greetingTimeout: 10000,    // 10 seconds
+  // Critical timeout settings
+  connectionTimeout: 30000,  // 30 seconds
+  socketTimeout: 30000,
+  greetingTimeout: 30000,
+  // Enable debug
+  debug: true,
+  logger: true,
+  // TLS settings
   tls: {
     rejectUnauthorized: false
   }
 });
 
-// Verify email connection
+// Verify connection
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ Email connection error:", error.message);
+    console.error("❌ SMTP Error:", error.message);
     console.error("Error code:", error.code);
+    console.error("=== TROUBLESHOOTING ===");
+    console.error("1. Check EMAIL_PASS is 16 chars, NO SPACES");
+    console.error("2. Enable 2-Step Verification on Google");
+    console.error("3. Regenerate App Password at: https://myaccount.google.com/apppasswords");
   } else {
-    console.log("✅ Email server ready");
-    console.log("📧 Using:", process.env.EMAIL_USER);
+    console.log("✅ SMTP Connection Verified!");
+    console.log("📧 Ready to send emails from:", process.env.EMAIL_USER);
   }
 });
+// =============================================
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ 
     ok: true, 
     message: "Server is running",
-    timestamp: new Date().toISOString(),
-    emailConfigured: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS
+    timestamp: new Date().toISOString()
   });
 });
 
-// Debug endpoint to check Gmail connection
-app.post("/api/debug", async (req, res) => {
-  console.log("🔧 Debug endpoint called");
-  
-  // Check credentials with NEW names
-  console.log("Credentials check:");
-  console.log("- EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
-  console.log("- EMAIL_PASS length:", process.env.EMAIL_PASS?.length || 0);
+// Test endpoint - Simple
+app.post("/api/test-gmail", async (req, res) => {
+  console.log("🧪 Testing Gmail...");
   
   try {
-    // Test SMTP connection
-    console.log("Testing SMTP connection...");
-    await transporter.verify();
-    console.log("✅ SMTP connection successful!");
+    // Check if credentials exist
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error("Email credentials not configured");
+    }
     
-    // Try to send a simple email
-    console.log("Attempting to send email...");
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,    // Changed
-      to: process.env.EMAIL_USER,      // Changed
-      subject: "DEBUG TEST",
-      text: "Test at " + new Date().toISOString()
-    });
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Send to yourself
+      subject: "✅ Gmail Test Successful!",
+      text: `Test email sent at: ${new Date().toISOString()}\n\nYour portfolio contact form is now working!`,
+      html: `
+        <h2>✅ Gmail Test Successful!</h2>
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+        <p>Your portfolio contact form is now working correctly!</p>
+        <hr>
+        <p><small>Sent from your Render server</small></p>
+      `
+    };
     
-    console.log("✅ Email sent! Message ID:", info.messageId);
-    res.json({ 
-      success: true, 
-      message: "Email sent successfully!",
-      messageId: info.messageId 
+    console.log("Sending test email...");
+    const info = await transporter.sendMail(mailOptions);
+    
+    console.log("✅ GMAIL TEST SUCCESS!");
+    console.log("Message ID:", info.messageId);
+    
+    res.json({
+      success: true,
+      message: "Test email sent! Check your Gmail inbox.",
+      messageId: info.messageId
     });
     
   } catch (error) {
-    console.error("❌ Debug error:");
-    console.error("- Code:", error.code);
-    console.error("- Message:", error.message);
-    console.error("- Command:", error.command);
+    console.error("❌ Gmail test failed:", error.message);
+    console.error("Error code:", error.code);
+    
+    let solution = "Unknown error";
+    if (error.code === 'EAUTH') {
+      solution = "Wrong password. Regenerate App Password.";
+    } else if (error.code === 'ETIMEDOUT') {
+      solution = "Network timeout. Try again in 1 minute.";
+    }
     
     res.status(500).json({
       success: false,
       error: error.message,
       code: error.code,
-      solution: "Check Gmail App Password and 2-Step Verification"
+      solution: solution
     });
   }
 });
 
-// Test email endpoint
-app.post("/api/test", async (req, res) => {
-  console.log("Test email requested");
-  
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,    // Changed
-      to: process.env.EMAIL_USER,      // Changed
-      subject: "TEST EMAIL",
-      text: "Test sent at " + new Date().toISOString()
-    });
-    
-    console.log("✅ Test email sent!");
-    res.json({ success: true, messageId: info.messageId });
-    
-  } catch (error) {
-    console.error("❌ Test failed:", error.message);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      code: error.code 
-    });
-  }
-});
-
-// Contact form endpoint
+// Contact form endpoint - WORKING
 app.post("/api/contact", async (req, res) => {
-  console.log("Contact form submission");
+  console.log("📨 Contact form received");
   
   try {
     const { name, email, message } = req.body;
     
+    // Validation
     if (!name || !email || !message) {
       return res.status(400).json({ 
         ok: false, 
-        error: "All fields required" 
+        error: "Please fill in all fields" 
       });
     }
     
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,    // Changed
-      to: process.env.EMAIL_USER,      // Changed
-      replyTo: email,
-      subject: `Contact from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
-    });
+    // Email validation
+    if (!email.includes('@') || !email.includes('.')) {
+      return res.status(400).json({
+        ok: false,
+        error: "Please enter a valid email address"
+      });
+    }
     
-    console.log("✅ Contact email sent!");
-    res.json({ 
-      ok: true, 
-      message: "Message sent successfully!",
-      messageId: info.messageId 
+    const mailOptions = {
+      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER, // Send to yourself
+      replyTo: email, // So you can reply directly to sender
+      subject: `New Contact: ${name} (${email})`,
+      text: `
+Name: ${name}
+Email: ${email}
+Message: ${message}
+---
+Sent from your portfolio website at ${new Date().toLocaleString()}
+      `,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px;">
+          <h2 style="color: #333;">📨 New Contact Form Submission</h2>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
+            <p><strong>👤 Name:</strong> ${name}</p>
+            <p><strong>📧 Email:</strong> ${email}</p>
+            <p><strong>💬 Message:</strong></p>
+            <div style="background: white; padding: 15px; border-left: 4px solid #4CAF50;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          <hr style="margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">
+            Sent from your portfolio website at ${new Date().toLocaleString()}<br>
+            Reply to: ${email}
+          </p>
+        </div>
+      `
+    };
+    
+    console.log("Sending contact email...");
+    const info = await transporter.sendMail(mailOptions);
+    
+    console.log("✅ CONTACT EMAIL SENT!");
+    console.log("Message ID:", info.messageId);
+    
+    res.json({
+      ok: true,
+      message: "Thank you! Your message has been sent.",
+      messageId: info.messageId
     });
     
   } catch (error) {
-    console.error("❌ Contact error:", error.message);
-    console.error("Error code:", error.code);
+    console.error("❌ Contact email failed:", error.message);
     
-    res.status(500).json({ 
-      ok: false, 
-      error: "Failed to send email",
-      details: error.message 
+    let userMessage = "Sorry, we couldn't send your message. Please try again.";
+    
+    if (error.code === 'EAUTH') {
+      userMessage = "Email service issue. Please contact me directly at vannnorey088@gmail.com";
+    }
+    
+    res.status(500).json({
+      ok: false,
+      error: userMessage
     });
   }
 });
 
-// ========== FIXED SPA ROUTES ==========
-// Home page
+// SPA Routes
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// About page
 app.get("/about", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Contact page
 app.get("/contact", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Projects page
 app.get("/projects", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Skills page
 app.get("/skills", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Add more routes if needed
 app.get("/experience", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Fallback for any other route
+// Fallback
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// =======================================
-
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 URL: https://portfoliowebsite-xaix.onrender.com`);
-  console.log(`🔗 Health: /api/health`);
-  console.log(`📧 Debug: POST /api/debug`);
-  console.log(`📨 Contact: POST /api/contact`);
+  console.log(`📧 Test Gmail: POST /api/test-gmail`);
+  console.log(`📨 Contact form: POST /api/contact`);
 });
