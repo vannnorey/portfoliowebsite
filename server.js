@@ -19,10 +19,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Handle OPTIONS preflight requests for specific routes
+// Handle OPTIONS preflight requests
 app.options('/api/contact', cors(corsOptions));
 app.options('/api/health', cors(corsOptions));
-app.options('/api/test-email', cors(corsOptions));
 
 // Rate limiter
 const contactLimiter = rateLimit({
@@ -48,14 +47,12 @@ const transporter = nodemailer.createTransport({
   logger: true
 });
 
-// Test SMTP connection on startup
+// Test SMTP connection
 transporter.verify((error, success) => {
   if (error) {
     console.error("❌ SMTP Connection Failed:", error.message);
-    console.log("📝 Check your GMAIL_APP_PASSWORD configuration in Render environment variables");
   } else {
     console.log("✅ SMTP Connection Verified");
-    console.log("📧 Ready to send emails");
   }
 });
 
@@ -65,8 +62,7 @@ app.get('/api/health', (req, res) => {
     ok: true,
     service: 'Contact Form API',
     status: 'running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -85,30 +81,27 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
       });
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Please enter a valid email address"
+      });
+    }
+
     const mailOptions = {
       from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER, // Sending to yourself
+      to: process.env.GMAIL_USER,
       replyTo: email,
       subject: `Portfolio Contact: ${name}`,
-      text: `
-Name: ${name}
-Email: ${email}
-Message: ${message}
-      `.trim(),
+      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
       html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <h2 style="color: #333;">New Contact Form Submission</h2>
-  <p><strong>Name:</strong> ${name}</p>
-  <p><strong>Email:</strong> ${email}</p>
-  <p><strong>Message:</strong></p>
-  <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-    ${message.replace(/\n/g, '<br>')}
-  </div>
-  <hr style="margin: 20px 0;">
-  <p style="color: #666; font-size: 12px;">
-    Sent from portfolio contact form at ${new Date().toLocaleString()}
-  </p>
-</div>
+        <h3>New Contact Form Submission</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, '<br>')}</p>
       `
     };
 
@@ -121,11 +114,11 @@ Message: ${message}
     });
     
   } catch (error) {
-    console.error("❌ Email error:", error);
+    console.error("❌ Email error:", error.message);
     
-    let errorMessage = "Failed to send email";
+    let errorMessage = "Failed to send email. Please try again.";
     if (error.code === 'EAUTH') {
-      errorMessage = "Email service configuration error";
+      errorMessage = "Email service configuration error. Please check server settings.";
     }
     
     return res.status(500).json({ 
@@ -135,12 +128,15 @@ Message: ${message}
   }
 });
 
-// SPA fallback - MUST come after API routes
-app.get('*', (req, res) => {
+// IMPORTANT: SPA fallback - This must be the LAST route
+// Use regex pattern instead of '*'
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 CORS enabled for: https://portfoliowebsite-xaix.onrender.com`);
+  console.log(`📧 Email user: ${process.env.GMAIL_USER || 'Not set'}`);
 });
