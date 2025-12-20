@@ -3,17 +3,16 @@ const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const path = require("path");
-const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Debug: Check environment
+// Debug: Check environment with NEW variable names
 console.log("=== SERVER STARTING ===");
 console.log("PORT:", PORT);
-console.log("GMAIL_USER:", process.env.GMAIL_USER || "NOT SET");
-console.log("GMAIL_APP_PASSWORD exists?:", !!process.env.GMAIL_APP_PASSWORD);
-console.log("GMAIL_APP_PASSWORD length:", process.env.GMAIL_APP_PASSWORD?.length || 0);
+console.log("EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
+console.log("EMAIL_PASS exists?:", !!process.env.EMAIL_PASS);
+console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length || 0);
 
 // CORS
 app.use(cors({
@@ -25,32 +24,54 @@ app.use(express.json());
 // Serve static files
 app.use(express.static(path.join(__dirname, "build")));
 
-// Email transporter
+// Email transporter with NEW variable names
 const transporter = nodemailer.createTransport({
   service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: process.env.EMAIL_USER,      // Changed from GMAIL_USER
+    pass: process.env.EMAIL_PASS,      // Changed from GMAIL_APP_PASSWORD
+  },
+  connectionTimeout: 10000,  // 10 seconds
+  socketTimeout: 10000,      // 10 seconds
+  greetingTimeout: 10000,    // 10 seconds
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
 // Verify email connection
 transporter.verify((error, success) => {
   if (error) {
-    console.error("Email connection error:", error.message);
+    console.error("❌ Email connection error:", error.message);
+    console.error("Error code:", error.code);
   } else {
     console.log("✅ Email server ready");
+    console.log("📧 Using:", process.env.EMAIL_USER);
   }
+});
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+    emailConfigured: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS
+  });
 });
 
 // Debug endpoint to check Gmail connection
 app.post("/api/debug", async (req, res) => {
   console.log("🔧 Debug endpoint called");
   
-  // Check credentials
+  // Check credentials with NEW names
   console.log("Credentials check:");
-  console.log("- GMAIL_USER:", process.env.GMAIL_USER || "NOT SET");
-  console.log("- Password length:", process.env.GMAIL_APP_PASSWORD?.length || 0);
+  console.log("- EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
+  console.log("- EMAIL_PASS length:", process.env.EMAIL_PASS?.length || 0);
   
   try {
     // Test SMTP connection
@@ -61,8 +82,8 @@ app.post("/api/debug", async (req, res) => {
     // Try to send a simple email
     console.log("Attempting to send email...");
     const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+      from: process.env.EMAIL_USER,    // Changed
+      to: process.env.EMAIL_USER,      // Changed
       subject: "DEBUG TEST",
       text: "Test at " + new Date().toISOString()
     });
@@ -89,23 +110,14 @@ app.post("/api/debug", async (req, res) => {
   }
 });
 
-// Health check
-app.get("/api/health", (req, res) => {
-  res.json({ 
-    ok: true, 
-    message: "Server is running",
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Test email endpoint
 app.post("/api/test", async (req, res) => {
   console.log("Test email requested");
   
   try {
     const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+      from: process.env.EMAIL_USER,    // Changed
+      to: process.env.EMAIL_USER,      // Changed
       subject: "TEST EMAIL",
       text: "Test sent at " + new Date().toISOString()
     });
@@ -138,8 +150,8 @@ app.post("/api/contact", async (req, res) => {
     }
     
     const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+      from: process.env.EMAIL_USER,    // Changed
+      to: process.env.EMAIL_USER,      // Changed
       replyTo: email,
       subject: `Contact from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
@@ -154,6 +166,8 @@ app.post("/api/contact", async (req, res) => {
     
   } catch (error) {
     console.error("❌ Contact error:", error.message);
+    console.error("Error code:", error.code);
+    
     res.status(500).json({ 
       ok: false, 
       error: "Failed to send email",
@@ -162,9 +176,7 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// ========== CRITICAL: FIXED SPA ROUTES ==========
-// Handle React Router paths - NO WILDCARD ERRORS
-
+// ========== FIXED SPA ROUTES ==========
 // Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
@@ -190,23 +202,23 @@ app.get("/skills", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Add more routes if your React app has them
+// Add more routes if needed
 app.get("/experience", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Fallback for any other route - BUT NOT USING '*'
+// Fallback for any other route
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// ================================================
+// =======================================
 
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🌐 URL: https://portfoliowebsite-xaix.onrender.com`);
   console.log(`🔗 Health: /api/health`);
-  console.log(`📧 Test: POST /api/test`);
+  console.log(`📧 Debug: POST /api/debug`);
   console.log(`📨 Contact: POST /api/contact`);
 });
