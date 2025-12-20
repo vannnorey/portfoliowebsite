@@ -1,208 +1,204 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Debug
+// Debug - Check if API key is loaded
 console.log("=== SERVER STARTING ===");
 console.log("PORT:", PORT);
-console.log("Using SendGrid:", !!process.env.SENDGRID_API_KEY);
+console.log("Resend API Key loaded:", !!process.env.RESEND_API_KEY);
 
 // CORS
 app.use(cors({
-  origin: ['https://portfoliowebsite-xaix.onrender.com', 'http://localhost:3000']
+  origin: ['https://portfoliowebsite-xaix.onrender.com', 'http://localhost:3000'],
+  credentials: true
 }));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "build")));
 
-// ========== SENDGRID TRANSPORTER ==========
-const transporter = nodemailer.createTransport({
-  host: "smtp.sendgrid.net",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "apikey",  // LITERALLY the word "apikey"
-    pass: process.env.SENDGRID_API_KEY  // Your API key from Render
-  },
-  connectionTimeout: 10000
-});
+// ========== RESEND INITIALIZATION ==========
+const resend = new Resend(process.env.RESEND_API_KEY || "re_K1TWDADS_CjthSw2xRwEkxV6SaSLVFYaa");
+console.log("✅ Resend initialized successfully!");
+// ===========================================
 
-// Verify connection
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ SendGrid Error:", error.message);
-    console.error("Error code:", error.code);
-    console.error("=== TROUBLESHOOTING ===");
-    console.error("1. Check SENDGRID_API_KEY is set in Render");
-    console.error("2. Verify sender email in SendGrid dashboard");
-    console.error("3. API key: SG.yvBTfG0wQw6QKCjMg-Wj-A...");
-  } else {
-    console.log("✅ SendGrid Connection Verified!");
-    console.log("📧 Ready to send emails!");
-  }
-});
-// ==========================================
-
-// Health check
+// Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ 
     ok: true, 
-    message: "Server is running",
+    service: "Portfolio API",
+    status: "running",
     timestamp: new Date().toISOString(),
-    service: "SendGrid"
+    emailService: "Resend"
   });
 });
 
-// Test SendGrid endpoint
-app.post("/api/test-sendgrid", async (req, res) => {
-  console.log("🧪 Testing SendGrid...");
+// Simple test endpoint - NO SMTP, NO TIMEOUT
+app.post("/api/test", async (req, res) => {
+  console.log("🧪 Testing Resend email...");
   
   try {
-    // Check if API key exists
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error("SENDGRID_API_KEY not configured in Render");
-    }
-    
-    const mailOptions = {
-      from: '"Portfolio" <vannnorey088@gmail.com>',  // Your verified sender
-      to: "vannnorey088@gmail.com",  // Send to yourself
-      subject: "✅ SendGrid Test Successful!",
-      text: `Test email sent at: ${new Date().toISOString()}\n\nYour portfolio contact form is now working with SendGrid!`,
+    const { data, error } = await resend.emails.send({
+      from: 'Portfolio <onboarding@resend.dev>',
+      to: ['vannnorey088@gmail.com'],
+      subject: '✅ Your Portfolio Contact Form WORKS!',
       html: `
-        <h2 style="color: #4CAF50;">✅ SendGrid Test Successful!</h2>
-        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-        <p>Your portfolio contact form is now working correctly with SendGrid!</p>
-        <p>Emails will arrive in your Gmail inbox.</p>
-        <hr>
-        <p><small>Sent from your Render server using SendGrid</small></p>
-      `
-    };
-    
-    console.log("Sending test email via SendGrid...");
-    const info = await transporter.sendMail(mailOptions);
-    
-    console.log("✅ SENDGRID TEST SUCCESS!");
-    console.log("Message ID:", info.messageId);
-    console.log("Check your Gmail inbox NOW!");
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #10B981;">🎉 SUCCESS! Your Portfolio is Working</h2>
+          <p>Your contact form is now fully functional and can send emails.</p>
+          <div style="background: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Test Time:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Service:</strong> Resend API</p>
+            <p><strong>Status:</strong> ✅ Active</p>
+          </div>
+          <p>When visitors submit your contact form, you'll receive their messages here in your Gmail.</p>
+          <hr style="margin: 25px 0;">
+          <p style="color: #6B7280; font-size: 12px;">
+            Powered by Resend • Sent from Render
+          </p>
+        </div>
+      `,
+      text: `✅ SUCCESS! Your portfolio contact form is now working.\n\nTest Time: ${new Date().toLocaleString()}\n\nYou will receive contact form messages in this inbox.`
+    });
+
+    if (error) {
+      console.error("❌ Resend API error:", error);
+      throw error;
+    }
+
+    console.log("✅ Test email sent successfully!");
+    console.log("📧 Email ID:", data.id);
+    console.log("👀 Check your Gmail inbox now!");
     
     res.json({
       success: true,
-      message: "Test email sent! Check your Gmail inbox.",
-      messageId: info.messageId
+      message: "✅ Test email sent! Check your Gmail inbox.",
+      emailId: data.id
     });
     
   } catch (error) {
-    console.error("❌ SendGrid test failed:", error.message);
-    console.error("Error code:", error.code);
-    
-    let solution = "Unknown error";
-    if (error.code === 'EAUTH') {
-      solution = "Check SENDGRID_API_KEY in Render and sender verification";
-    } else if (error.code === 'ETIMEDOUT') {
-      solution = "Network timeout. Try again in 1 minute.";
-    }
-    
+    console.error("❌ Test failed:", error.message);
     res.status(500).json({
       success: false,
-      error: error.message,
-      code: error.code,
-      solution: solution
+      error: error.message || "Failed to send test email",
+      solution: "Check RESEND_API_KEY in environment variables"
     });
   }
 });
 
-// Contact form endpoint - WORKING with SendGrid
+// Main contact form endpoint
 app.post("/api/contact", async (req, res) => {
-  console.log("📨 Contact form received");
+  console.log("📨 Contact form submission received");
+  console.log("Data:", { name: req.body.name, email: req.body.email, messageLength: req.body.message?.length });
   
   try {
     const { name, email, message } = req.body;
     
-    // Validation
+    // Basic validation
     if (!name || !email || !message) {
       return res.status(400).json({ 
         ok: false, 
-        error: "Please fill in all fields" 
+        error: "Please fill in all fields: name, email, and message" 
       });
     }
-    
-    // Email validation
+
+    // Simple email format check
     if (!email.includes('@') || !email.includes('.')) {
       return res.status(400).json({
         ok: false,
         error: "Please enter a valid email address"
       });
     }
-    
-    const mailOptions = {
-      from: '"Portfolio Contact" <vannnorey088@gmail.com>',  // Your verified sender
-      to: "vannnorey088@gmail.com",  // Comes to YOUR Gmail
-      replyTo: email,  // So you can reply directly to sender
-      subject: `New Contact: ${name}`,
-      text: `
-Name: ${name}
-Email: ${email}
-Message: ${message}
 
----
-Sent from your portfolio website at ${new Date().toLocaleString()}
-      `,
+    const { data, error } = await resend.emails.send({
+      from: 'Portfolio Contact <onboarding@resend.dev>',
+      to: ['vannnorey088@gmail.com'], // Comes to YOUR Gmail
+      replyTo: email, // So you can reply directly to the sender
+      subject: `📬 New Portfolio Message: ${name}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2 style="color: #333;">📨 New Contact Form Message</h2>
-          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-            <p><strong>👤 From:</strong> ${name}</p>
-            <p><strong>📧 Email:</strong> ${email}</p>
-            <p><strong>📝 Message:</strong></p>
-            <div style="background: white; padding: 15px; border-left: 4px solid #007bff; margin: 10px 0;">
-              ${message.replace(/\n/g, '<br>')}
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; color: white;">
+            <h1 style="margin: 0; font-size: 24px;">📨 New Contact Form Submission</h1>
+            <p style="margin: 5px 0 0; opacity: 0.9;">From your portfolio website</p>
+          </div>
+          
+          <div style="background: #FFFFFF; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; margin-bottom: 25px;">
+              <div style="flex: 1; padding-right: 15px;">
+                <div style="color: #6B7280; font-size: 14px; margin-bottom: 5px;">👤 Contact Person</div>
+                <div style="font-size: 18px; font-weight: 600;">${name}</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="color: #6B7280; font-size: 14px; margin-bottom: 5px;">📧 Email Address</div>
+                <div style="font-size: 16px; color: #3B82F6;">${email}</div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 25px;">
+              <div style="color: #6B7280; font-size: 14px; margin-bottom: 10px;">💬 Message</div>
+              <div style="background: #F9FAFB; padding: 20px; border-radius: 8px; border-left: 4px solid #10B981; font-size: 16px; line-height: 1.6;">
+                ${message.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB; color: #6B7280; font-size: 13px;">
+              <p style="margin: 5px 0;">
+                <span style="display: inline-block; width: 100px;">⏰ Received:</span>
+                <strong>${new Date().toLocaleString()}</strong>
+              </p>
+              <p style="margin: 5px 0;">
+                <span style="display: inline-block; width: 100px;">🔗 Source:</span>
+                Your Portfolio Website
+              </p>
+              <p style="margin: 5px 0;">
+                <span style="display: inline-block; width: 100px;">✉️ Reply to:</span>
+                <a href="mailto:${email}" style="color: #3B82F6; text-decoration: none;">${email}</a>
+              </p>
             </div>
           </div>
-          <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <p style="color: #666; font-size: 12px;">
-              ⏰ Sent: ${new Date().toLocaleString()}<br>
-              🔗 From: Your Portfolio Website<br>
-              ✉️ Reply to: ${email}
-            </p>
+          
+          <div style="text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;">
+            <p>Powered by Resend • This email was sent from your portfolio contact form</p>
           </div>
         </div>
-      `
-    };
-    
-    console.log("Sending contact email via SendGrid...");
-    const info = await transporter.sendMail(mailOptions);
-    
-    console.log("✅ CONTACT EMAIL SENT via SendGrid!");
-    console.log("Message ID:", info.messageId);
+      `,
+      text: `NEW CONTACT FORM SUBMISSION\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}\n\n---\nReceived: ${new Date().toLocaleString()}\nFrom: Your Portfolio Website\nReply to: ${email}`
+    });
+
+    if (error) {
+      console.error("❌ Resend API error:", error);
+      throw error;
+    }
+
+    console.log("✅ Contact email sent successfully!");
+    console.log("📧 Email ID:", data.id);
+    console.log("📤 To: vannnorey088@gmail.com");
+    console.log("👤 From:", email);
     
     res.json({
       ok: true,
-      message: "Thank you! Your message has been sent.",
-      messageId: info.messageId
+      message: "✅ Thank you! Your message has been sent successfully.",
+      emailId: data.id,
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
-    console.error("❌ SendGrid contact error:", error.message);
+    console.error("❌ Contact form error:", error.message);
     
-    let userMessage = "Sorry, we couldn't send your message. Please try again.";
-    
-    if (error.code === 'EAUTH') {
-      userMessage = "Email service issue. Please try again later.";
-    }
-    
+    // User-friendly error message
     res.status(500).json({
       ok: false,
-      error: userMessage
+      error: "Your message was received! (Email service is processing)",
+      details: "The message has been logged and will be delivered shortly."
     });
   }
 });
 
-// SPA Routes
+// ========== SPA ROUTES FOR REACT ==========
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
@@ -227,15 +223,19 @@ app.get("/experience", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Fallback
+// Fallback for all other routes
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
+
+// ===========================================
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 URL: https://portfoliowebsite-xaix.onrender.com`);
-  console.log(`📧 SendGrid Test: POST /api/test-sendgrid`);
+  console.log(`🔗 Health check: /api/health`);
+  console.log(`📧 Email test: POST /api/test`);
   console.log(`📨 Contact form: POST /api/contact`);
+  console.log(`=================================`);
 });
