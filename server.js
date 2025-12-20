@@ -10,8 +10,7 @@ const PORT = process.env.PORT || 3001;
 // Debug
 console.log("=== SERVER STARTING ===");
 console.log("PORT:", PORT);
-console.log("EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
-console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length || 0);
+console.log("Using SendGrid:", !!process.env.SENDGRID_API_KEY);
 
 // CORS
 app.use(cors({
@@ -21,83 +20,75 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "build")));
 
-// ========== FIXED GMAIL TRANSPORTER ==========
+// ========== SENDGRID TRANSPORTER ==========
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: 465,  // CHANGED: Use port 465 instead of 587
-  secure: true,  // CHANGED: true for port 465
+  host: "smtp.sendgrid.net",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: "apikey",  // LITERALLY the word "apikey"
+    pass: process.env.SENDGRID_API_KEY  // Your API key from Render
   },
-  // Critical timeout settings
-  connectionTimeout: 30000,  // 30 seconds
-  socketTimeout: 30000,
-  greetingTimeout: 30000,
-  // Enable debug
-  debug: true,
-  logger: true,
-  // TLS settings
-  tls: {
-    rejectUnauthorized: false
-  }
+  connectionTimeout: 10000
 });
 
 // Verify connection
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ SMTP Error:", error.message);
+    console.error("❌ SendGrid Error:", error.message);
     console.error("Error code:", error.code);
     console.error("=== TROUBLESHOOTING ===");
-    console.error("1. Check EMAIL_PASS is 16 chars, NO SPACES");
-    console.error("2. Enable 2-Step Verification on Google");
-    console.error("3. Regenerate App Password at: https://myaccount.google.com/apppasswords");
+    console.error("1. Check SENDGRID_API_KEY is set in Render");
+    console.error("2. Verify sender email in SendGrid dashboard");
+    console.error("3. API key: SG.yvBTfG0wQw6QKCjMg-Wj-A...");
   } else {
-    console.log("✅ SMTP Connection Verified!");
-    console.log("📧 Ready to send emails from:", process.env.EMAIL_USER);
+    console.log("✅ SendGrid Connection Verified!");
+    console.log("📧 Ready to send emails!");
   }
 });
-// =============================================
+// ==========================================
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ 
     ok: true, 
     message: "Server is running",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    service: "SendGrid"
   });
 });
 
-// Test endpoint - Simple
-app.post("/api/test-gmail", async (req, res) => {
-  console.log("🧪 Testing Gmail...");
+// Test SendGrid endpoint
+app.post("/api/test-sendgrid", async (req, res) => {
+  console.log("🧪 Testing SendGrid...");
   
   try {
-    // Check if credentials exist
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error("Email credentials not configured");
+    // Check if API key exists
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error("SENDGRID_API_KEY not configured in Render");
     }
     
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // Send to yourself
-      subject: "✅ Gmail Test Successful!",
-      text: `Test email sent at: ${new Date().toISOString()}\n\nYour portfolio contact form is now working!`,
+      from: '"Portfolio" <vannnorey088@gmail.com>',  // Your verified sender
+      to: "vannnorey088@gmail.com",  // Send to yourself
+      subject: "✅ SendGrid Test Successful!",
+      text: `Test email sent at: ${new Date().toISOString()}\n\nYour portfolio contact form is now working with SendGrid!`,
       html: `
-        <h2>✅ Gmail Test Successful!</h2>
+        <h2 style="color: #4CAF50;">✅ SendGrid Test Successful!</h2>
         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-        <p>Your portfolio contact form is now working correctly!</p>
+        <p>Your portfolio contact form is now working correctly with SendGrid!</p>
+        <p>Emails will arrive in your Gmail inbox.</p>
         <hr>
-        <p><small>Sent from your Render server</small></p>
+        <p><small>Sent from your Render server using SendGrid</small></p>
       `
     };
     
-    console.log("Sending test email...");
+    console.log("Sending test email via SendGrid...");
     const info = await transporter.sendMail(mailOptions);
     
-    console.log("✅ GMAIL TEST SUCCESS!");
+    console.log("✅ SENDGRID TEST SUCCESS!");
     console.log("Message ID:", info.messageId);
+    console.log("Check your Gmail inbox NOW!");
     
     res.json({
       success: true,
@@ -106,12 +97,12 @@ app.post("/api/test-gmail", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("❌ Gmail test failed:", error.message);
+    console.error("❌ SendGrid test failed:", error.message);
     console.error("Error code:", error.code);
     
     let solution = "Unknown error";
     if (error.code === 'EAUTH') {
-      solution = "Wrong password. Regenerate App Password.";
+      solution = "Check SENDGRID_API_KEY in Render and sender verification";
     } else if (error.code === 'ETIMEDOUT') {
       solution = "Network timeout. Try again in 1 minute.";
     }
@@ -125,7 +116,7 @@ app.post("/api/test-gmail", async (req, res) => {
   }
 });
 
-// Contact form endpoint - WORKING
+// Contact form endpoint - WORKING with SendGrid
 app.post("/api/contact", async (req, res) => {
   console.log("📨 Contact form received");
   
@@ -149,41 +140,44 @@ app.post("/api/contact", async (req, res) => {
     }
     
     const mailOptions = {
-      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Send to yourself
-      replyTo: email, // So you can reply directly to sender
-      subject: `New Contact: ${name} (${email})`,
+      from: '"Portfolio Contact" <vannnorey088@gmail.com>',  // Your verified sender
+      to: "vannnorey088@gmail.com",  // Comes to YOUR Gmail
+      replyTo: email,  // So you can reply directly to sender
+      subject: `New Contact: ${name}`,
       text: `
 Name: ${name}
 Email: ${email}
 Message: ${message}
+
 ---
 Sent from your portfolio website at ${new Date().toLocaleString()}
       `,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2 style="color: #333;">📨 New Contact Form Submission</h2>
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 5px;">
-            <p><strong>👤 Name:</strong> ${name}</p>
+          <h2 style="color: #333;">📨 New Contact Form Message</h2>
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <p><strong>👤 From:</strong> ${name}</p>
             <p><strong>📧 Email:</strong> ${email}</p>
-            <p><strong>💬 Message:</strong></p>
-            <div style="background: white; padding: 15px; border-left: 4px solid #4CAF50;">
+            <p><strong>📝 Message:</strong></p>
+            <div style="background: white; padding: 15px; border-left: 4px solid #007bff; margin: 10px 0;">
               ${message.replace(/\n/g, '<br>')}
             </div>
           </div>
-          <hr style="margin: 20px 0;">
-          <p style="color: #666; font-size: 12px;">
-            Sent from your portfolio website at ${new Date().toLocaleString()}<br>
-            Reply to: ${email}
-          </p>
+          <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 12px;">
+              ⏰ Sent: ${new Date().toLocaleString()}<br>
+              🔗 From: Your Portfolio Website<br>
+              ✉️ Reply to: ${email}
+            </p>
+          </div>
         </div>
       `
     };
     
-    console.log("Sending contact email...");
+    console.log("Sending contact email via SendGrid...");
     const info = await transporter.sendMail(mailOptions);
     
-    console.log("✅ CONTACT EMAIL SENT!");
+    console.log("✅ CONTACT EMAIL SENT via SendGrid!");
     console.log("Message ID:", info.messageId);
     
     res.json({
@@ -193,12 +187,12 @@ Sent from your portfolio website at ${new Date().toLocaleString()}
     });
     
   } catch (error) {
-    console.error("❌ Contact email failed:", error.message);
+    console.error("❌ SendGrid contact error:", error.message);
     
     let userMessage = "Sorry, we couldn't send your message. Please try again.";
     
     if (error.code === 'EAUTH') {
-      userMessage = "Email service issue. Please contact me directly at vannnorey088@gmail.com";
+      userMessage = "Email service issue. Please try again later.";
     }
     
     res.status(500).json({
@@ -242,6 +236,6 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 URL: https://portfoliowebsite-xaix.onrender.com`);
-  console.log(`📧 Test Gmail: POST /api/test-gmail`);
+  console.log(`📧 SendGrid Test: POST /api/test-sendgrid`);
   console.log(`📨 Contact form: POST /api/contact`);
 });
