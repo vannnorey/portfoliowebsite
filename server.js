@@ -56,6 +56,13 @@ transporter.verify((error, success) => {
   }
 });
 
+// Add this debug code after transporter.verify()
+console.log("=== DEBUG ===");
+console.log("GMAIL_USER:", process.env.GMAIL_USER || "NOT SET");
+console.log("GMAIL_APP_PASSWORD exists?:", !!process.env.GMAIL_APP_PASSWORD);
+console.log("GMAIL_APP_PASSWORD length:", process.env.GMAIL_APP_PASSWORD?.length || 0);
+console.log("=== END DEBUG ===");
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
