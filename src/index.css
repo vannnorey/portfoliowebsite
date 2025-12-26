@@ -2842,9 +2842,22 @@ html {
 
 /* NUCLEAR OPTION - Stops all shaking */
 @media (max-width: 768px) {
+
+  .no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+  
   * { 
     animation: none !important; 
     transform: none !important; 
+  }
+  
+  /* ADD THESE 2 LINES */
+  nav, [class*="nav"] {
+    animation: none !important;
+    transform: none !important;
   }
   
   /* Keep layout working */
