@@ -2335,6 +2335,7 @@
   animation: spring-bounce 2s var(--ease-spring) infinite;
 }
 
+
 .animate-shimmer {
   animation: 3s ease-in-out infinite shimmer;
 }
