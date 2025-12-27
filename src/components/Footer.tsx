@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { useEffect, useState, useRef } from "react";
 import { Heart } from "lucide-react";
 
 const socialLinks: { name: string; url: string }[] = [
@@ -10,19 +10,75 @@ const socialLinks: { name: string; url: string }[] = [
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [isVisible, setIsVisible] = useState(false);
+  const footerRef = useRef<HTMLElement>(null);
+  const [heartScale, setHeartScale] = useState(1);
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (footerRef.current) {
+      observer.observe(footerRef.current);
+    }
+
+    return () => {
+      if (footerRef.current) {
+        observer.unobserve(footerRef.current);
+      }
+    };
+  }, []);
+
+  // Heart beat animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeartScale((prev) => (prev === 1 ? 1.2 : 1));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fadeInClasses = (delay = 0) => ({
+    className: `transition-all duration-500 ease-out ${
+      isVisible
+        ? "opacity-100 translate-y-0"
+        : "opacity-0 translate-y-5"
+    }`,
+    style: { transitionDelay: `${delay}ms` } as React.CSSProperties,
+  });
+
+  const slideInLeftClasses = (delay = 0) => ({
+    className: `transition-all duration-500 ease-out ${
+      isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"
+    }`,
+    style: { transitionDelay: `${delay}ms` } as React.CSSProperties,
+  });
+
+  const scaleInClasses = (delay = 0) => ({
+    className: `transition-all duration-500 ease-out ${
+      isVisible ? "opacity-100 scale-100" : "opacity-0 scale-90"
+    }`,
+    style: { transitionDelay: `${delay}ms` } as React.CSSProperties,
+  });
+
+  const quickLinks = ["Home", "Projects", "About", "Contact"];
 
   return (
-    <footer className="relative py-12 px-4 sm:px-6 lg:px-8 border-t border-[#6EAEDC]/10">
+    <footer
+      ref={footerRef}
+      className="relative py-12 px-4 sm:px-6 lg:px-8 border-t border-[#6EAEDC]/10"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <div {...fadeInClasses()} className="space-y-4">
             <div className="text-white tracking-tight text-xl">
               <span className="bg-gradient-to-r from-[#6EAEDC] via-white to-[#427396] bg-clip-text text-transparent">
                 Portfolio
@@ -31,69 +87,49 @@ export function Footer() {
             <p className="text-white/40 text-sm leading-relaxed">
               Crafting beautiful digital experiences with passion and precision.
             </p>
-          </motion.div>
+          </div>
 
           {/* Quick Links */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
+          <div {...fadeInClasses(100)} className="space-y-4">
             <h4 className="text-white">Quick Links</h4>
             <nav className="flex flex-col gap-2">
-              {["Home", "Projects", "About", "Contact"].map((link, i) => (
-                <motion.a
+              {quickLinks.map((link, i) => (
+                <a
                   key={link}
                   href={`#${link.toLowerCase()}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + i * 0.05 }}
-                  whileHover={{ x: 5, color: "#6EAEDC" }}
-                  className="text-white/50 hover:text-[#6EAEDC] transition-all text-sm w-fit"
+                  {...slideInLeftClasses(200 + i * 50)}
+                  className="text-white/50 hover:text-[#6EAEDC] transition-all duration-300 text-sm w-fit hover:translate-x-1"
                 >
                   {link}
-                </motion.a>
+                </a>
               ))}
             </nav>
-          </motion.div>
+          </div>
 
           {/* Connect */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
+          <div {...fadeInClasses(200)} className="space-y-4">
             <h4 className="text-white">Connect</h4>
             <div className="flex flex-wrap gap-3">
               {socialLinks.slice(0, 4).map((s, i) => (
-                <motion.a
+                <a
                   key={s.name}
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  whileHover={{ y: -4, scale: 1.05 }}
-                  className="px-4 py-2 backdrop-blur-xl bg-white/5 border border-white/10 rounded-lg text-white/50 hover:text-white hover:border-[#6EAEDC]/40 hover:bg-white/10 transition-all text-sm"
+                  {...scaleInClasses(300 + i * 100)}
+                  className="px-4 py-2 backdrop-blur-xl bg-white/5 border border-white/10 rounded-lg text-white/50 hover:text-white hover:border-[#6EAEDC]/40 hover:bg-white/10 transition-all duration-300 text-sm hover:-translate-y-0.5 hover:scale-[1.05]"
                 >
                   {s.name}
-                </motion.a>
+                </a>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Bottom Bar */}
-        <motion.div
+        <div
+          {...fadeInClasses(400)}
           className="pt-8 border-t border-[#6EAEDC]/10"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
         >
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/40">
             <div className="flex items-center gap-2">
@@ -101,16 +137,18 @@ export function Footer() {
             </div>
             <div className="flex items-center gap-1">
               <span>Made with</span>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
+              <div
+                style={{
+                  transform: `scale(${heartScale})`,
+                  transition: "transform 0.3s ease-in-out",
+                }}
               >
                 <Heart size={14} className="text-[#6EAEDC] fill-[#6EAEDC]" />
-              </motion.div>
+              </div>
               <span>and passion</span>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );

@@ -1,10 +1,6 @@
-import { motion } from "motion/react";
 import { ProjectCard } from "./ProjectCard";
-import { useEffect, useState } from "react";
 
 export function Projects() {
-  const [image, setImages] = useState<string[]>([]);
- 
   const projects = [
     {
       title: "E-Commerce Platform",
@@ -58,33 +54,16 @@ export function Projects() {
     },
   ];
 
-  useEffect(() => {
-    // We'll set placeholder images initially
-    setImages(Array(6).fill(""));
-  }, []);
-
   return (
     <section id="projects" className="py-32 px-4 sm:px-6 lg:px-8 relative">
-      {/* Gradient wave transition with scroll trigger */}
-      <motion.div
-        className="absolute -top-20 left-0 w-full h-px"
-        initial={{ scaleX: 0, opacity: 0 }}
-        whileInView={{ scaleX: 1, opacity: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 1.2, ease: [0.33, 1, 0.68, 1] }}
-      >
-        <div className="w-full h-full bg-gradient-to-r from-transparent via-[#6EAEDC] to-transparent shadow-[0_0_20px_rgba(110,174,220,0.6)]" />
-      </motion.div>
+      {/* Simple gradient line - no animation */}
+      <div className="absolute -top-20 left-0 w-full h-px">
+        <div className="w-full h-full bg-gradient-to-r from-transparent via-[#6EAEDC] to-transparent" />
+      </div>
 
       <div className="max-w-7xl mx-auto">
-        {/* Section Header with layered blur dissolve */}
-        <motion.div
-          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
-          className="text-center mb-16 space-y-4"
-        >
+        {/* Section Header - no animation */}
+        <div className="text-center mb-16 space-y-4">
           <h2 className="text-white text-4xl sm:text-5xl lg:text-6xl tracking-tight">
             Featured
             <span className="bg-gradient-to-r from-[#6EAEDC] via-white to-[#427396] bg-clip-text text-transparent">
@@ -95,18 +74,14 @@ export function Projects() {
           <p className="text-[#898989] text-lg max-w-2xl mx-auto tracking-wide">
             Recent UX/UI design projects crafted with research-driven decisions and modern design principles.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Projects Grid with staggered orchestration */}
+        {/* Projects Grid - no stagger */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project, index) => (
+          {projects.map((project) => (
             <ProjectCard
-              key={project.title}
-              {...project}
-              image={project.image}
-              link={project.link}
-              index={index}
-            />
+              index={0} key={project.title}
+              {...project}            />
           ))}
         </div>
       </div>
