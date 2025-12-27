@@ -29,26 +29,14 @@ export default function App() {
         }} />
       </div>
 
-      {/* Main content wrapper with forced background */}
+      {/* SIMPLIFIED - Remove all bg-transparent wrappers */}
       <div className="relative z-10">
-        <div className="bg-transparent">
-          <Navigation />
-        </div>
-        <div className="bg-transparent">
-          <Hero />
-        </div>
-        <div className="bg-transparent">
-          <Projects />
-        </div>
-        <div className="bg-transparent">
-          <About />
-        </div>
-        <div className="bg-transparent">
-          <Contact />
-        </div>
-        <div className="bg-transparent">
-          <Footer />
-        </div>
+        <Navigation />
+        <Hero />
+        <Projects />
+        <About />
+        <Contact />
+        <Footer />
       </div>
     </div>
   );
