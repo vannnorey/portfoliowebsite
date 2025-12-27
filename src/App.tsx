@@ -4,8 +4,8 @@ import { Projects } from "./components/Projects";
 import { About } from "./components/About";
 import { Contact } from "./components/Contact";
 import { Footer } from "./components/Footer";
-import { MagneticCursor } from "./components/MagneticCursor"; // Star pointer
-import { GPUParticles } from "./components/GPUParticles"; // Snow/star fall
+import { MagneticCursor } from "./components/MagneticCursor";
+import { GPUParticles } from "./components/GPUParticles";
 import { ScrollProgress } from "./components/ScrollProgress";
 import "./styles/animations.css";
 
@@ -29,12 +29,27 @@ export default function App() {
         }} />
       </div>
 
-      <Navigation />
-      <Hero />
-      <Projects />
-      <About />
-      <Contact />
-      <Footer />
+      {/* Main content wrapper with forced background */}
+      <div className="relative z-10">
+        <div className="bg-transparent">
+          <Navigation />
+        </div>
+        <div className="bg-transparent">
+          <Hero />
+        </div>
+        <div className="bg-transparent">
+          <Projects />
+        </div>
+        <div className="bg-transparent">
+          <About />
+        </div>
+        <div className="bg-transparent">
+          <Contact />
+        </div>
+        <div className="bg-transparent">
+          <Footer />
+        </div>
+      </div>
     </div>
   );
 }
