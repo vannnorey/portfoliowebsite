@@ -29,7 +29,7 @@ export default function App() {
         }} />
       </div>
 
-      {/* SIMPLIFIED - Remove all bg-transparent wrappers */}
+      {/* Simple content */}
       <div className="relative z-10">
         <Navigation />
         <Hero />
