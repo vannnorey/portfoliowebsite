@@ -4,12 +4,8 @@ import { Projects } from "./components/Projects";
 import { About } from "./components/About";
 import { Contact } from "./components/Contact";
 import { Footer } from "./components/Footer";
-import { MagneticCursor } from "./components/MagneticCursor";
-import { VolumetricLightSweep } from "./components/VolumetricLightSweep";
-import { MorphingBlobs } from "./components/MorphingBlobs";
-import { ParallaxLayers } from "./components/ParallaxLayers";
-import { GPUParticles } from "./components/GPUParticles";
-import { AmbientMotionLayer } from "./components/AmbientMotionLayer";
+import { MagneticCursor } from "./components/MagneticCursor"; // Star pointer
+import { GPUParticles } from "./components/GPUParticles"; // Snow/star fall
 import { ScrollProgress } from "./components/ScrollProgress";
 import "./styles/animations.css";
 
@@ -19,22 +15,10 @@ export default function App() {
       {/* Scroll progress indicator */}
       <ScrollProgress />
       
-      {/* Ambient motion background - 60s loop */}
-      <AmbientMotionLayer />
-      
-      {/* Parallax depth layers */}
-      <ParallaxLayers />
-      
-      {/* Morphing blobs with elastic easing */}
-      <MorphingBlobs />
-      
-      {/* Volumetric light sweeps */}
-      <VolumetricLightSweep />
-      
-      {/* GPU-optimized particles */}
+      {/* GPU-optimized particles - for snow/star fall effect */}
       <GPUParticles />
       
-      {/* Magnetic cursor with trails */}
+      {/* Magnetic cursor with trails - star pointer */}
       <MagneticCursor />
 
       {/* Subtle grid overlay */}
