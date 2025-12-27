@@ -1,5 +1,6 @@
 // Contact.tsx
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { GlassButton } from "./GlassButton";
 import { GlassInput } from "./GlassInput";
@@ -17,30 +18,21 @@ export function Contact() {
     message: "",
   });
   const [loading, setLoading] = useState<boolean>(false);
+  // include validate-error for validation messages
   const [status, setStatus] = useState<
     null | "success" | "error" | "validate-error"
   >(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [opacityValue, setOpacityValue] = useState(0.5);
 
-  // Auto-hide inline messages after 5s
+  // Auto-hide inline messages (success/error/validation) after 10s
   useEffect(() => {
     if (!status) return;
     const timer = setTimeout(() => {
       setStatus(null);
       setErrorMsg(null);
-    }, 5000);
+    }, 5000); // 
     return () => clearTimeout(timer);
   }, [status]);
-
-  // Manual opacity animation for the gradient effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOpacityValue((prev) => (prev === 0.5 ? 0.8 : 0.5));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   async function sendToApi(data: FormData) {
     try {
@@ -80,11 +72,14 @@ export function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // remove browser native validation UI
+    // (form has noValidate attribute below)
     setStatus(null);
     setErrorMsg(null);
 
     const v = validate(formData);
     if (v) {
+      // validation error (orange)
       setErrorMsg(v);
       setStatus("validate-error");
       return;
@@ -98,6 +93,7 @@ export function Contact() {
         setErrorMsg(null);
         setFormData({ name: "", email: "", message: "" });
       } else {
+        // server / API error (red)
         const msg = result.error ?? `HTTP ${result.status ?? "?"}`;
         setErrorMsg(msg);
         setStatus("error");
@@ -142,13 +138,25 @@ export function Contact() {
 
   return (
     <section id="contact" className="py-32 px-4 sm:px-6 lg:px-8 relative">
-      {/* small top line - static */}
-      <div className="absolute -top-20 left-0 w-full h-px">
+      {/* small top line */}
+      <motion.div
+        className="absolute -top-20 left-0 w-full h-px"
+        initial={{ scaleX: 0, opacity: 0 }}
+        whileInView={{ scaleX: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+      >
         <div className="w-full h-full bg-gradient-to-r from-transparent via-[#6EAEDC] to-transparent shadow-[0_0_20px_rgba(110,174,220,0.5)]" />
-      </div>
+      </motion.div>
 
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16 space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16 space-y-4"
+        >
           <h2 className="text-white text-4xl sm:text-5xl lg:text-6xl tracking-tight">
             Get
             <span className="bg-gradient-to-r from-[#6EAEDC] via-[#427396] to-[#6EAEDC] bg-clip-text text-transparent">
@@ -159,18 +167,30 @@ export function Contact() {
           <p className="text-[#898989] text-lg max-w-2xl mx-auto">
             Have a project in mind? Let's create something amazing together
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
-          <div>
-            <div className="relative backdrop-blur-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.04] border border-[#6EAEDC]/20 rounded-3xl p-8 shadow-2xl shadow-[#6EAEDC]/5 hover:scale-[1.01] transition-transform duration-300">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className="relative backdrop-blur-2xl bg-gradient-to-br from-white/[0.12] to-white/[0.04] border border-[#6EAEDC]/20 rounded-3xl p-8 shadow-2xl shadow-[#6EAEDC]/5"
+            >
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 via-transparent to-[#6EAEDC]/10 opacity-60 pointer-events-none" />
               <div className="absolute inset-0 rounded-3xl shadow-[inset_0_2px_4px_rgba(110,174,220,0.15)] pointer-events-none" />
 
-              {/* Static gradient with opacity changed via state */}
-              <div
+              <motion.div
                 className="absolute -inset-[1px] bg-gradient-to-r from-[#6EAEDC]/40 via-[#427396]/40 to-[#6EAEDC]/40 rounded-3xl blur-md -z-10"
-                style={{ opacity: opacityValue }}
+                animate={{ opacity: [0.5, 0.8, 0.5] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               />
 
               <form
@@ -180,32 +200,44 @@ export function Contact() {
                 aria-busy={!!loading}
                 aria-live="polite"
               >
-                {/* Inline messages: text-only, colored */}
+                {/* Inline messages: text-only, colored; inline styles used to force color */}
                 {status === "success" && (
-                  <div
-                    style={{ color: "#6EE7B7" }}
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.28 }}
+                    style={{ color: "#6EE7B7" }} // green (hex) forced inline
                     className="text-sm font-medium tracking-wide"
                   >
                     Message sent — I will get back to you soon!
-                  </div>
+                  </motion.div>
                 )}
 
                 {status === "validate-error" && errorMsg && (
-                  <div
-                    style={{ color: "#FDBA74" }}
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.28 }}
+                    style={{ color: "#FDBA74" }} // orange (hex) forced inline
                     className="text-sm font-medium tracking-wide"
                   >
                     {errorMsg}
-                  </div>
+                  </motion.div>
                 )}
 
                 {status === "error" && errorMsg && (
-                  <div
-                    style={{ color: "#FF8A8A" }}
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.28 }}
+                    style={{ color: "#FF8A8A" }} // red (hex) forced inline
                     className="text-sm font-medium tracking-wide"
                   >
                     {errorMsg}
-                  </div>
+                  </motion.div>
                 )}
 
                 <div className="flex flex-col gap-2">
@@ -283,10 +315,16 @@ export function Contact() {
                   {loading ? "Sending..." : "Send Message"}
                 </GlassButton>
               </form>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="space-y-6"
+          >
             <div className="space-y-4">
               <h3 className="text-white text-2xl">
                 Let's talk about your project
@@ -300,23 +338,39 @@ export function Contact() {
 
             <div className="space-y-4 pt-4">
               {contactInfo.map((info, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className="relative group hover:translate-x-3 hover:scale-[1.02] transition-all duration-300"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.1,
+                    ease: [0.21, 0.45, 0.27, 0.9],
+                  }}
+                  whileHover={{ x: 12, scale: 1.02 }}
+                  className="relative group"
                 >
                   <div className="relative backdrop-blur-2xl bg-white/[0.06] border border-white/10 rounded-2xl p-6 shadow-xl">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 via-transparent to-[#6EAEDC]/5 opacity-60 pointer-events-none" />
-                    <div className="absolute -inset-[1px] rounded-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <motion.div
+                      className="absolute -inset-[1px] rounded-2xl -z-10"
+                      initial={{ opacity: 0 }}
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       <div className="absolute inset-0 bg-gradient-to-r from-[#6EAEDC]/40 to-[#427396]/40 blur-lg" />
-                    </div>
+                    </motion.div>
 
                     <div className="relative flex items-center gap-4">
-                      <div
-                        className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#6EAEDC]/20 to-[#427396]/20 border border-[#6EAEDC]/30 flex items-center justify-center text-[#6EAEDC] hover:rotate-360 hover:scale-110 transition-all duration-600"
+                      <motion.div
+                        className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#6EAEDC]/20 to-[#427396]/20 border border-[#6EAEDC]/30 flex items-center justify-center text-[#6EAEDC]"
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.6 }}
                         aria-hidden
                       >
                         {info.icon}
-                      </div>
+                      </motion.div>
                       <div>
                         <div className="text-white/50 text-sm">
                           {info.label}
@@ -333,7 +387,7 @@ export function Contact() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
@@ -341,19 +395,20 @@ export function Contact() {
               <div className="text-[#898989] text-sm mb-4">Follow me</div>
               <div className="flex gap-3">
                 {socialLinks.map((s) => (
-                  <a
+                  <motion.a
                     key={s.name}
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[#898989] hover:text-white hover:border-[#6EAEDC]/50 hover:-translate-y-1 transition-all duration-300"
+                    whileHover={{ y: -4 }}
+                    className="w-12 h-12 backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[#898989] hover:text-white hover:border-[#6EAEDC]/50 transition-all"
                   >
                     {s.icon}
-                  </a>
+                  </motion.a>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
