@@ -36,7 +36,7 @@ export function About() {
   ];
 
   const stats = [
-    { value: "3+", label: "Projects Completed" },
+    { value: "2+", label: "Projects Completed" },
     { value: "2+", label: "Design Practice" },
     // { value: "1+", label: "Design Practice" },
     // { value: "Figma", label: "Expertise" },

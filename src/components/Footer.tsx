@@ -3,9 +3,9 @@ import { Heart } from "lucide-react";
 
 const socialLinks: { name: string; url: string }[] = [
   { name: "Telegram", url: "https://t.me/vann_norey" },
-  { name: "LinkedIn", url: "" },
-  { name: "Dribbble", url: "https://dribbble.com/vann_norey" },
-  { name: "Pinterest", url: "https://pin.it/4NA29kxMV" },
+  { name: "Dribbble", url: "https://dribbble.com/vann_norey/about?utm_source=Clipboard_%22clipboard_about%22&utm_campaign=%22vann_norey%22&utm_content=%22About%20vann_norey%22&utm_medium=Social_Share" },
+  { name: "Pinterest", url: "https://pin.it/60BkWMm6v" },
+  { name: "Github", url: "https://github.com/vannnorey" },
 ];
 
 export function Footer() {

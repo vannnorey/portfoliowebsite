@@ -13,7 +13,7 @@ export function Projects() {
         "Product browsing experience designed for clarity and ease",
       tags: ["Web", "Mobile", "E-Commerce"],
       image: "/image/clothes.png",
-      link: "https://www.figma.com/design/M2W4QaMeKNhDvGm6v1eJbK/E-Commerce-Clothes?node-id=384-4218&t=hPYQrSqQAuPdGlG4-1",
+      link: "https://www.figma.com/design/M2W4QaMeKNhDvGm6v1eJbK/E-Commerce-Clothes?node-id=1-2&t=84YLpIeQZoRavttz-1",
     },
     {
       title: "Food Ordering",
@@ -22,7 +22,7 @@ export function Projects() {
         "Simple mobile experience for browsing menus and placing orders",
       tags: ["Mobile", "UX/UI", "Animation"],
       image: "/image/nhamnham.png",
-      link: "https://www.figma.com/design/3PLf96I8J393KtMcHNpisH/Food-Delivery?node-id=81-29211&t=nwI4Jy7XnLuowKPd-1",
+      link: "https://www.figma.com/design/3PLf96I8J393KtMcHNpisH/Food-Delivery?node-id=0-1&t=gMOxSYMwWL2DGKaQ-1",
     },
     {
       title: "Job Announcement",
@@ -30,7 +30,7 @@ export function Projects() {
       description: "Mobile interface for exploring job posts with an easy, intuitive flow",
       tags: ["Mobile", "UI/UX" ],
       image: "/image/findjob.png",
-      link: "https://www.figma.com/design/5BwnZHDfP11UvEYLALf2jZ/Job-Announcement?node-id=83-9741&t=N2MBquRVH2NaZc9e-1",
+      link: "https://www.figma.com/design/5BwnZHDfP11UvEYLALf2jZ/Job-Announcement?node-id=0-1&t=gMOxSYMwWL2DGKaQ-1",
     },
     {
       title: "Furniture Shop Website",
@@ -38,7 +38,7 @@ export function Projects() {
       description: "Modern e-commerce layout for browsing furniture products",
       tags: ["Web", "E-Commerce"],
       image: "/image/furniture.png",
-      link: "https://www.figma.com/design/ceTvdC8w9EnnfB9ZXmVGyq/Furniture-Ecommerce?node-id=2023-92&t=bMCkJ7Plw45ZuqFh-1",
+      link: "https://www.figma.com/design/ceTvdC8w9EnnfB9ZXmVGyq/Furniture-Ecommerce?node-id=0-1&t=gMOxSYMwWL2DGKaQ-1",
     },
     {
       title: "Electronics Shop",
@@ -46,15 +46,15 @@ export function Projects() {
       description: "Easy and structured electronics browsing experience",
       tags: ["Web", "Mobile", "Destkop"],
       image: "/image/electronics.png",
-      link: "https://www.figma.com/design/f4wcyp2qKAQzFYMrfgP26s/Electronics-Store?node-id=51-137&t=bCuE89X74zM1cizi-1",
+      link: "https://www.figma.com/design/f4wcyp2qKAQzFYMrfgP26s/Electronics-Store?node-id=0-1&t=gMOxSYMwWL2DGKaQ-1",
     },
     {
-      title: "Portfolio",
-      category: "UI Design",
-      description: "Modern, clean layout showcasing my projects and design style",
-      tags: ["Interface", "Behance"],
-      image: "/image/portfolio.png",
-      link: "https://www.behance.net/gallery/230355477/UIUX-Portfolio",
+      title: "Poster",
+      category: "Graphic Design",
+      description: "Poster design collection with clean and modern visuals.",
+      tags: ["Photoshop", "Illustrator", "Figma"],
+      image: "/image/graphic.jpg",
+      link: "https://dribbble.com/vann_norey/about?utm_source=Clipboard_%22clipboard_about%22&utm_campaign=%22vann_norey%22&utm_content=%22About%20vann_norey%22&utm_medium=Social_Share",
     },
   ];
 

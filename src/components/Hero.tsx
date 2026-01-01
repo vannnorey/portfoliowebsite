@@ -81,29 +81,16 @@ export function Hero() {
                     delay: staggerDelay.title2,
                     ease: [0.33, 1, 0.68, 1],
                   }}
-                  className="inline-block font-black bg-gradient-to-r from-[#6EAEDC] via-white to-[#427396] 
-                 bg-clip-text text-transparent relative"
+                  className="font-black bg-gradient-to-r from-[#6EAEDC] via-white to-[#427396]
+                            bg-clip-text text-transparent"
                 >
-                  Designer &
-                  <motion.span
-                    className="absolute -inset-2 bg-gradient-to-r from-[#6EAEDC]/20 to-[#427396]/20 
-                   blur-2xl -z-10"
-                    animate={{
-                      opacity: [0.3, 0.6, 0.3],
-                      scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  />
+                  Designer 
                 </motion.span>
 
                 <br />
                 
                 {/* Developer */}
-                <motion.span
+                {/* <motion.span
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
@@ -114,7 +101,7 @@ export function Hero() {
                   className="inline-block font-black"
                 >
                   Graphic Design
-                </motion.span>
+                </motion.span> */}
               </h1>
             </div>
 
@@ -266,7 +253,7 @@ export function Hero() {
                           className="h-full rounded-full"
                           style={{
                             background:
-                              "linear-gradient(90deg, rgba(110,174,220,0.45), rgba(66,115,150,0.35))",
+                              "linear-gradient(90deg, rgba(0, 149, 255, 0.45), rgba(44, 137, 202, 0.35))",
                             boxShadow:
                               "0 6px 18px rgba(66,115,150,0.12), inset 0 1px 0 rgba(255,255,255,0.08)",
                             backdropFilter: "blur(4px)",
@@ -287,8 +274,8 @@ export function Hero() {
                   {[
                     // I used your uploaded file path for the first preview image
                     { src: "/image/figma.png" },
-                    { src: "/image/photoshop.png" },
                     { src: "/image/xd.png" },
+                    { src: "/image/photoshop.png" },
                   ].map((item, i) => (
                     <motion.div
                       key={i}

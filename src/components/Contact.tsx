@@ -131,9 +131,9 @@ export function Contact() {
 
   const socialLinks = [
     { name: "Telegram", url: "https://t.me/vann_norey", icon: "T" },
-    { name: "LinkedIn", url: "", icon: "L" },
-    { name: "Dribbble", url: "https://dribbble.com/vann_norey", icon: "D" },
-    { name: "Pinterest", url: "https://pin.it/4NA29kxMV", icon: "P" },
+    { name: "Dribbble", url: "https://dribbble.com/vann_norey/about?utm_source=Clipboard_%22clipboard_about%22&utm_campaign=%22vann_norey%22&utm_content=%22About%20vann_norey%22&utm_medium=Social_Share", icon: "D" },
+    { name: "Pinterest", url: "https://pin.it/60BkWMm6v", icon: "P" },
+    { name: "Github", url: "https://github.com/vannnorey", icon: "G" },
   ];
 
   return (
